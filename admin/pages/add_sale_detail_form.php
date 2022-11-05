@@ -65,7 +65,7 @@
         ?>        
     </h2>
     <div class="detail_table_wrap">
-    <button type="button" id="add_row">Add New Row</button>
+        <button type="button" id="add_row">Add New Row</button>
         <form action="" method="post" enctype="multipart/form-data" onsubmit="return validateStandard(this)" id="add_sale_detail"> 
             <table class="detail_table_wrap" id="myTable">
                 <tr>
@@ -81,55 +81,25 @@
                 </tr>
                 <tr class="new_row">                                                            
                     <td>
-                        <select name="purchase_detail_id[]" required exclude=" " onchange="copyTextValue()" id="select">
-                            <option value="" disabled selected>..Product</option>
-                            <?php
-                                while ($row=mysqli_fetch_assoc($product_info))
-                                { 
-                            ?>
-                            <option value="">
-                               <em><?php echo $row['purchase_detail_id'];?></em>
-                                   <?php echo $sales_id ?>
-                                    <?php echo $row['product_id'];?>
-                                    <?php echo $row['unit_price'];?>
-                                    <?php echo $row['vat_rate'];?>
-                                    <?php echo $row['product_id'];?>
-                                    <?php echo $row['product_name'];?>
-                                    <?php echo $row['qty_remain'];?>
-                                </ul>
+                        <input type="hidden" class="default_sales_id" value="<?php echo $sales_id; ?>"/>
+                        <select name="purchase_detail_id[]" required exclude=" " class="product_list" id="select">
+                            <option value="" disabled selected>Choose one</option>
+                            <?php while ($row=mysqli_fetch_assoc($product_info)){ ?>
+                            <option data-pid=<?php echo $row['product_id'];?> data-price="<?php echo $row['unit_price'];?>" data-vat= <?php echo $row['vat_rate'];?>>
+                                <em><?php echo $row['purchase_detail_id'];?></em>
+                                <?php echo $row['product_id'];?>
+                                <?php echo $row['product_name'];?>
                             </option>
                             <?php } ?>
                         </select>
                     </td>
-                    <td>
-                        <input type="text"  name="sales_id[]" value="<?php echo $sales_id ?>">
-                    </td> 
-                    <td>
-                        <input type="text" name="product_id[]" required value="" >
-                    </td>
-                    <td>
-                        <input type="text" name="qty_sold[]" required maxlength="8">
-                    </td>
-                    <?php
-                        if ($_SERVER["REQUEST_METHOD"] == "POST") {
-                            $qty_sold=htmlspecialchars($_REQUEST['qty_sold']);
-                            $amount=$qty_sold*$row['unit_price'];
-                            $vat_amount=($amount*$row['vat_rate'])/100;
-                            $total_amnt_with_vat=$amount+$vat_amount;
-                        }
-                    ?> 
-                    <td>
-                        <input type="text" name="unit_price[]" value="<?php echo $row['unit_price'] ?>" maxlength="8" >
-                    </td>
-                    <td>
-                        <input type="text" name="total_amnt[]" value="<?php echo $amount ?>" maxlength="12" >
-                    </td>
-                    <td>
-                        <input type="text" name="vat_amnt[]" value="<?php echo $vat_amount ?>" maxlength="8" >
-                    </td>
-                    <td>
-                        <input type="text" name="sub_total[]" value="<?php echo $total_amnt_with_vat ?>" maxlength="12" >
-                    </td>                    
+                    <td><input type="text" name="sales_id[]" class="sales_id" value="" readonly></td> 
+                    <td><input type="text" name="product_id[]" class="product_id" required value="" readonly></td>
+                    <td><input type="text" name="qty_sold[]" class="qty_sold qty_change" value="" required maxlength="8"></td>
+                    <td><input type="text" name="unit_price[]" class="unit_price" value="" maxlength="8" readonly></td>
+                    <td><input type="text" name="total_amnt[]" class="total_amnt" value="" maxlength="12" readonly></td>
+                    <td><input type="text" name="vat_amnt[]" class="vat_amnt" value="" maxlength="8" readonly></td>
+                    <td><input type="text" name="sub_total[]" class="sub_total" value="" maxlength="12" readonly></td>                    
                     <td><button type="button" class="remove_row">Delete</button></td>                       
                 </tr>
             </table>
@@ -154,7 +124,6 @@
 </div>
 <script>
 document.addEventListener('DOMContentLoaded', function(){
-    //
     $('#add_row').click(function(){
         $('tr.new_row:last-child').clone().appendTo('#myTable')
         $('tr.new_row:last-child').find("input").val("")
@@ -163,8 +132,42 @@ document.addEventListener('DOMContentLoaded', function(){
 
     $(document).on("click", 'button.remove_row' , function(){
         $(this).parents('tr.new_row').remove()
-    })      
+    })
     
+    $(document).on("change", ".product_list", function(){
+        var unit_price = $(this).find(':selected').attr('data-price');
+        var vat = $(this).find(':selected').attr('data-vat');
+        var default_qty = 1;
+        var total_amnt = unit_price * default_qty;
+        var vat_cal = (total_amnt * vat) / 100;
+        var sub_total = total_amnt + vat_cal;
+
+        $(this).closest('td').next('td').find('input').val($(".default_sales_id").val());
+        $(this).closest('td').next('td').next('td').find('input').val($(this).find(':selected').attr('data-pid'));
+
+        $(this).closest('td').next('td').next('td').next('td').find('input').val(default_qty);
+        $(this).closest('td').next('td').next('td').next('td').find('input').attr('data-unit_price', unit_price);
+        $(this).closest('td').next('td').next('td').next('td').find('input').attr('data-vat', vat);
+
+        $(this).closest('td').next('td').next('td').next('td').next('td').find('input').val(unit_price);
+        $(this).closest('td').next('td').next('td').next('td').next('td').next('td').find('input').val(total_amnt);
+        $(this).closest('td').next('td').next('td').next('td').next('td').next('td').next('td').find('input').val(vat_cal);
+        $(this).closest('td').next('td').next('td').next('td').next('td').next('td').next('td').next('td').find('input').val(sub_total);
+    })
+
+    $(document).on("keyup",".qty_change", function(){
+        var qty = $(this).val();
+        var unit_price = $(this).attr('data-unit_price');
+        var vat = $(this).attr('data-vat');
+
+        var total_amnt = unit_price * qty;
+        var vat_cal = (total_amnt * vat) / 100;
+        var sub_total = total_amnt + vat_cal;
+
+        $(this).closest('td').next('td').next('td').find('input').val(total_amnt);
+        $(this).closest('td').next('td').next('td').next('td').find('input').val(vat_cal);
+        $(this).closest('td').next('td').next('td').next('td').next('td').find('input').val(sub_total);
+    })    
 });
 </script>
 <script>
