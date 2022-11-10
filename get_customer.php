@@ -13,3 +13,4 @@ $customer_info=$obj_welcome->select_customer_info_by_id_name($customer_id);
     <option value="<?php echo $row['customer_id']?>"><?php echo $row['customer_id'].' '.$row['first_name'].' '.$row['last_name']?></option>
     <?php }?>
 </select>
+<!-- comments -->
