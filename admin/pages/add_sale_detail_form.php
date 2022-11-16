@@ -1,6 +1,16 @@
 
 <script src="https://code.jquery.com/jquery-3.6.0.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
-
+<link href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.6-rc.0/css/select2.min.css" rel="stylesheet" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.6-rc.0/js/select2.min.js"></script>
+<style type="text/css">
+    .inputFieldDesign{
+        padding: 3px;
+        border-radius: 9999em;
+    }
+    .bg_gradient{
+        background: linear-gradient(90deg, rgb(231 229 255) 0%, rgb(25 255 194 / 88%) 35%, rgb(231 251 255) 100%);
+    }
+</style>
 <?php      
     require_once '../classes/database.php';    
     $obj_database = new Database(); 
@@ -65,97 +75,100 @@
         ?>        
     </h2>
     <div class="detail_table_wrap">
-        <button type="button" id="add_row">Add New Row</button>
+        <input type="hidden" class="com_sales_id" value="<?php echo $sales_id;?>">
+        <select exclude="" class="product_list js-states form-control" id="select">
+            <option value="" disabled selected>Choose one</option>
+            <?php while ($row=mysqli_fetch_assoc($product_info)){ ?>
+            <option data-pid=<?php echo $row['product_id'];?> data-pname="<?php echo $row['product_name'];?>" data-price="<?php echo $row['unit_price'];?>" data-vat= <?php echo $row['vat_rate'];?>>
+                <?php echo $row['product_id'];?>
+                <?php echo $row['product_name'];?>
+            </option>
+            <?php } ?>
+        </select>
+            
+        <button type="button" id="add_row" style="float: none !important">Add New Product</button>
         <form action="" method="post" enctype="multipart/form-data" onsubmit="return validateStandard(this)" id="add_sale_detail"> 
             <table class="detail_table_wrap" id="myTable">
                 <tr>
-                    <th>Select Product</th>
+                    <th style="width:20%;">Product Name</th>
                     <th>Sales ID</th>
                     <th>Product ID</th>
                     <th>Quantity</th>
                     <th>Unit Price</th>
                     <th>Amount</th>
-                    <th>Vat</th>
+                    <th>VAT</th>
                     <th>Total Taka</th>
-                    <th>Remove</th>
+                    <th>Action</th>
                 </tr>
-                <tr class="new_row">                                                            
-                    <td>
-                        <input type="hidden" class="default_sales_id" value="<?php echo $sales_id; ?>"/>
-                        <select name="purchase_detail_id[]" required exclude=" " class="product_list" id="select">
-                            <option value="" disabled selected>Choose one</option>
-                            <?php while ($row=mysqli_fetch_assoc($product_info)){ ?>
-                            <option data-pid=<?php echo $row['product_id'];?> data-price="<?php echo $row['unit_price'];?>" data-vat= <?php echo $row['vat_rate'];?>>
-                                <em><?php echo $row['purchase_detail_id'];?></em>
-                                <?php echo $row['product_id'];?>
-                                <?php echo $row['product_name'];?>
-                            </option>
-                            <?php } ?>
-                        </select>
-                    </td>
-                    <td><input type="text" name="sales_id[]" class="sales_id" value="" readonly></td> 
-                    <td><input type="text" name="product_id[]" class="product_id" required value="" readonly></td>
-                    <td><input type="text" name="qty_sold[]" class="qty_sold qty_change" value="" required maxlength="8"></td>
-                    <td><input type="text" name="unit_price[]" class="unit_price" value="" maxlength="8" readonly></td>
-                    <td><input type="text" name="total_amnt[]" class="total_amnt" value="" maxlength="12" readonly></td>
-                    <td><input type="text" name="vat_amnt[]" class="vat_amnt" value="" maxlength="8" readonly></td>
-                    <td><input type="text" name="sub_total[]" class="sub_total" value="" maxlength="12" readonly></td>                    
-                    <td><button type="button" class="remove_row">Delete</button></td>                       
-                </tr>
+                
             </table>
-            <div class="detail_svae_wrap">
-                <label>Paid by Customer</label>
-                <input type="text" name="paid_amnt" required placeholder="Paid Amount" maxlength="8">
+
+            <div class="purchase_parent_wrap" style="float: right !important; margin-right: 12.5% !important; width: 30% !important;">
+                <div>Total Amount<span><input type="text" class="grand_total inputFieldDesign bg_gradient" readonly placeholder="0"></span></div><hr>
+                <div>Discount<span><input type="text" class="discount_amount inputFieldDesign" name="discount_amnt" required placeholder="0" maxlength="8"></span></div><hr>
+                <div>Grand Total:<span><input type="text" class="after_discount inputFieldDesign bg_gradient" name="discount_amnt" required placeholder="0" maxlength="8"></span></div><hr>
+                <div>Paid Amount:<span><input type="text" class="paid_by_customer inputFieldDesign" name="paid_amnt" required placeholder="0" maxlength="8"></span></div><hr>      
+                <div>Return Amount:<span><input type="text" class="return_amount inputFieldDesign bg_gradient" readonly placeholder="0"></span></div><hr>
+                <div class="input_wrap" id="detail_sale_save_btn" style="float: right !important; width: 50%; !important"><input type="submit" name="btn" value="Save"></div> 
             </div>
-            <div class="detail_svae_wrap">
-                <label>Discounted</label>
-                <input type="text" name="discount_amnt" required placeholder="Discount" maxlength="8">
-            </div>
-            <div class="input_wrap" id="detail_sale_save_btn"><input type="submit" name="btn" value="Save"></div> 
-        </form>          
+        </form>
     </div>
     <div class="purchase_parent_wrap">
-        <div class="total_supplier_paid">Payable From Customer:<span><?php echo number_format((float)$total_customer_paid, 2, '.') ?></span></div>
-        <div class="paid_amnt">Paid Amount:<span><?php echo number_format((float)$paid_amnt, 2, '.') ?></span></div>        
-        <div class="due_amnt">Discount:<span><?php echo number_format((float)(abs($discount_amnt)), 2, '.') ?></span></div>
-        <div class="due_amnt">Due Amount:<span><?php echo number_format((float)(abs($due_amnt)), 2, '.') ?></span></div>
+        <div class="total_supplier_paid">Payable From Customer:<span><?php echo round((float)$total_customer_paid, 2) ?></span></div>
+        <div class="paid_amnt">Paid Amount:<span><?php echo round((float)$paid_amnt, 2) ?></span></div>        
+        <div class="due_amnt">Discount:<span><?php echo round((float)(abs($discount_amnt)), 2) ?></span></div>
+        <div class="due_amnt">Due Amount:<span><?php echo round((float)(abs($due_amnt)), 2) ?></span></div>
         <a class="print_preview" href="sales_detail_print_preview.php?id=<?php echo $sales_id ?>" title="Preview">Print Preview</a>
     </div>    
 </div>
 <script>
 document.addEventListener('DOMContentLoaded', function(){
     $('#add_row').click(function(){
-        $('tr.new_row:last-child').clone().appendTo('#myTable')
-        $('tr.new_row:last-child').find("input").val("")
-        $('tr.new_row:last-child').find("input").eq(0).val(parseInt( $('#sale_id').text()))
-    })
-
-    $(document).on("click", 'button.remove_row' , function(){
-        $(this).parents('tr.new_row').remove()
-    })
-    
-    $(document).on("change", ".product_list", function(){
-        var unit_price = $(this).find(':selected').attr('data-price');
-        var vat = $(this).find(':selected').attr('data-vat');
+        var sales_id = $('.com_sales_id').val();
+        var product_id = $('.product_list').find(':selected').attr('data-pid');
+        var pname = $('.product_list').find(':selected').attr('data-pname');
+        if(pname == undefined) {
+            alert("Please, select product..."); return false;
+        }
+        var unit_price = $('.product_list').find(':selected').attr('data-price');
+        var vat = $('.product_list').find(':selected').attr('data-vat');
         var default_qty = 1;
         var total_amnt = unit_price * default_qty;
         var vat_cal = (total_amnt * vat) / 100;
         var sub_total = total_amnt + vat_cal;
 
-        $(this).closest('td').next('td').find('input').val($(".default_sales_id").val());
-        $(this).closest('td').next('td').next('td').find('input').val($(this).find(':selected').attr('data-pid'));
+        if($('.qty_sold_'+product_id).length == 0){
+            var html = `<tr class="new_row">                                                            
+                <td style="width:20%;">
+                    <input type="hidden" name="purchase_detail_id[]" class="purchase_detail_id" value="${product_id}" readonly>
+                    <input type="text" name="product_name[]" class="product_name" value="${pname}" readonly></td> 
+                <td><input type="text" name="sales_id[]" class="sales_id" value="${sales_id}" readonly></td> 
+                <td><input type="text" name="product_id[]" class="product_id" required value="${product_id}" readonly></td>
+                <td><input type="text" name="qty_sold[]" class="qty_sold qty_change qty_sold_${product_id}" value="${default_qty}" required maxlength="8" data-unit_price="${unit_price}"  data-vat="${vat}"></td>
+                <td><input type="text" name="unit_price[]" class="unit_price" value="${unit_price}" maxlength="8" readonly></td>
+                <td><input type="text" name="total_amnt[]" class="total_amnt" value="${total_amnt}" maxlength="12" readonly></td>
+                <td><input type="text" name="vat_amnt[]" class="vat_amnt" value="${vat_cal}" maxlength="8" readonly></td>
+                <td><input type="text" name="sub_total[]" class="sub_total" value="${sub_total}" maxlength="12" readonly></td>                    
+                <td><button type="button" class="remove_row">Delete</button></td>                       
+            </tr>`;
+            $('#myTable').append(html)
+        }else{
+            $('.qty_sold_'+product_id).val(parseInt($('.qty_sold_'+product_id).val()) + 1).trigger('change');
+        }
 
-        $(this).closest('td').next('td').next('td').next('td').find('input').val(default_qty);
-        $(this).closest('td').next('td').next('td').next('td').find('input').attr('data-unit_price', unit_price);
-        $(this).closest('td').next('td').next('td').next('td').find('input').attr('data-vat', vat);
-
-        $(this).closest('td').next('td').next('td').next('td').next('td').find('input').val(unit_price);
-        $(this).closest('td').next('td').next('td').next('td').next('td').next('td').find('input').val(total_amnt);
-        $(this).closest('td').next('td').next('td').next('td').next('td').next('td').next('td').find('input').val(vat_cal);
-        $(this).closest('td').next('td').next('td').next('td').next('td').next('td').next('td').next('td').find('input').val(sub_total);
+        grandTotalCalculation();
     })
 
-    $(document).on("keyup",".qty_change", function(){
+    $("#select").select2({
+          placeholder: "Select product",
+          allowClear: true
+      });
+
+    $(document).on("click", 'button.remove_row' , function(){
+        $(this).parents('tr.new_row').remove()
+    })
+
+    $(document).on("keyup change",".qty_change", function(){
         var qty = $(this).val();
         var unit_price = $(this).attr('data-unit_price');
         var vat = $(this).attr('data-vat');
@@ -167,7 +180,27 @@ document.addEventListener('DOMContentLoaded', function(){
         $(this).closest('td').next('td').next('td').find('input').val(total_amnt);
         $(this).closest('td').next('td').next('td').next('td').find('input').val(vat_cal);
         $(this).closest('td').next('td').next('td').next('td').next('td').find('input').val(sub_total);
-    })    
+
+        grandTotalCalculation();
+    })  
+
+    $(document).on("keyup",".discount_amount", function(){
+        var total = $('.grand_total').val();
+        var discount = parseFloat($(this).val());
+        var m_discount = (discount == '') ? 0 : parseFloat(discount);
+        $('.after_discount').val((total - m_discount).toFixed(2));
+    })
+
+    $(document).on("keyup",".paid_by_customer", function(){
+        var total = $('.after_discount').val();
+        var paid = parseFloat($(this).val());
+        var m_paid = (paid == '') ? 0 : parseFloat(paid);
+        var returnAmount = 0;
+        if(paid > 0){
+            returnAmount = m_paid - total;
+        }
+        $('.return_amount').val(returnAmount.toFixed(2));
+    })
 });
 </script>
 <script>
@@ -175,5 +208,23 @@ document.addEventListener('DOMContentLoaded', function(){
         var e = document.getElementById("select");
         var val = e.options[e.selectedIndex].value;
         document.getElementById("destination").value = val;
+    }
+
+    function grandTotalCalculation(){
+        var discount = $('.discount_amount').val();
+        var paid = $('.paid_by_customer').val();
+        var m_discount = (discount == '') ? 0 : parseFloat(discount);
+        var m_paid = (paid == '') ? 0 : parseFloat(paid);
+        var total = 0;
+        $(".sub_total").each(function(){
+            total += parseFloat($(this).val());
+        });
+        $('.grand_total').val(total);
+        $('.after_discount').val((total - m_discount).toFixed(2));
+        var returnAmount = 0;
+        if(paid > 0){
+            returnAmount = m_paid - total - m_discount;
+        }
+        $('.return_amount').val(returnAmount.toFixed(2));
     }
 </script>
