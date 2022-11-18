@@ -10,6 +10,12 @@
     .bg_gradient{
         background: linear-gradient(90deg, rgb(231 229 255) 0%, rgb(25 255 194 / 88%) 35%, rgb(231 251 255) 100%);
     }
+    .quantity_input{
+        padding: 0px; border: 1px solid #b7b7b7 !important;
+        border-radius: 5px !important;
+        font: normal 17px/normal "Times New Roman", Times, serif !important;
+        background: rgba(252,252,252,1) !important;
+    }
 </style>
 <?php      
     require_once '../classes/database.php';    
@@ -97,7 +103,7 @@
                     <th>Unit Price</th>
                     <th>Amount</th>
                     <th>VAT</th>
-                    <th>Total Taka</th>
+                    <th>Total Amount</th>
                     <th>Action</th>
                 </tr>
                 
@@ -144,7 +150,7 @@ document.addEventListener('DOMContentLoaded', function(){
                     <input type="text" name="product_name[]" class="product_name" value="${pname}" readonly></td> 
                 <td><input type="text" name="sales_id[]" class="sales_id" value="${sales_id}" readonly></td> 
                 <td><input type="text" name="product_id[]" class="product_id" required value="${product_id}" readonly></td>
-                <td><input type="text" name="qty_sold[]" class="qty_sold qty_change qty_sold_${product_id}" value="${default_qty}" required maxlength="8" data-unit_price="${unit_price}"  data-vat="${vat}"></td>
+                <td><input type="text" name="qty_sold[]" class="qty_sold qty_change qty_sold_${product_id} quantity_input" value="${default_qty}" required maxlength="8" data-unit_price="${unit_price}"  data-vat="${vat}"></td>
                 <td><input type="text" name="unit_price[]" class="unit_price" value="${unit_price}" maxlength="8" readonly></td>
                 <td><input type="text" name="total_amnt[]" class="total_amnt" value="${total_amnt}" maxlength="12" readonly></td>
                 <td><input type="text" name="vat_amnt[]" class="vat_amnt" value="${vat_cal}" maxlength="8" readonly></td>
@@ -165,7 +171,8 @@ document.addEventListener('DOMContentLoaded', function(){
       });
 
     $(document).on("click", 'button.remove_row' , function(){
-        $(this).parents('tr.new_row').remove()
+        $(this).parents('tr.new_row').remove();
+        grandTotalCalculation();
     })
 
     $(document).on("keyup change",".qty_change", function(){
@@ -188,7 +195,16 @@ document.addEventListener('DOMContentLoaded', function(){
         var total = $('.grand_total').val();
         var discount = parseFloat($(this).val());
         var m_discount = (discount == '') ? 0 : parseFloat(discount);
-        $('.after_discount').val((total - m_discount).toFixed(2));
+        var after_discount = total - m_discount;
+        $('.after_discount').val(after_discount.toFixed(2));
+        var paid = $('.paid_by_customer').val();
+        var m_paid = (paid == '') ? 0 : parseFloat(paid);
+        var returnAmount = 0;
+        if(paid > 0){
+            returnAmount = m_paid - after_discount;
+        }
+        $('.return_amount').val(returnAmount.toFixed(2));
+
     })
 
     $(document).on("keyup",".paid_by_customer", function(){
@@ -220,10 +236,11 @@ document.addEventListener('DOMContentLoaded', function(){
             total += parseFloat($(this).val());
         });
         $('.grand_total').val(total);
-        $('.after_discount').val((total - m_discount).toFixed(2));
+        var after_discount = total - m_discount;
+        $('.after_discount').val(after_discount.toFixed(2));
         var returnAmount = 0;
         if(paid > 0){
-            returnAmount = m_paid - total - m_discount;
+            returnAmount = m_paid - after_discount;
         }
         $('.return_amount').val(returnAmount.toFixed(2));
     }
