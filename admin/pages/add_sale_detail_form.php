@@ -235,7 +235,7 @@ document.addEventListener('DOMContentLoaded', function(){
         $(".sub_total").each(function(){
             total += parseFloat($(this).val());
         });
-        $('.grand_total').val(total);
+        $('.grand_total').val(total.toFixed(2));
         var after_discount = total - m_discount;
         $('.after_discount').val(after_discount.toFixed(2));
         var returnAmount = 0;
